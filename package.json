@@ -1,0 +1,17 @@
+{
+  "name": "webgl-falling-flames",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Falling flames via pure WebGL",
+  "main": "index.js",
+  "author": "Anton Dubrouski <antondubrouski@gmail.com>",
+  "license": "MIT",
+  "repository": "https://github.com/adubrouski/webgl-falling-flames",
+  "scripts": {
+    "dev-server:vanilla": "vite -c ./.vite/vite.vanilla.config.js",
+    "dev-server:web-worker": "vite -c ./.vite/vite.web-worker.config.js"
+  },
+  "devDependencies": {
+    "vite": "7.2.6"
+  }
+}

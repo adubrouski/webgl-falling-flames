@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Falling Flames WW</title>
+    <link rel="stylesheet" href="./index.css">
+    <link rel="icon" href="./favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <canvas></canvas>
+
+    <div id="flames-count-input-wrapper">
+        <input id="flames-count-input" type="range" min="100" max="10000" />
+    </div>
+
+    <div id="info-block">
+        <div id="fps-count-view">...</div>
+
+        <div id="flames-count-view"></div>
+
+        <div id="particles-count-view"></div>
+    </div>
+
+    <script>
+      window.__ENTRYPOINT__ = "app-web-worker.js";
+
+      window.__WORKER_COUNT__ = 2;
+
+      window.__SETTINGS__ = {
+        flameCount: 100,
+        flameParticleCount: 100,
+        widthRange: [20, 35],
+        heightRange: [40, 70],
+        noiseRange: [10, 15],
+        speedRange: [20, 80],
+        particleTopColor: [1, 0.5, 0],
+        particleBottomColor: [1, 0, 0],
+      };
+    </script>
+
+    <script src="./index.js" type="module"></script>
+</body>
+</html>
