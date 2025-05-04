@@ -1,0 +1,10 @@
+{
+  "name": "webgl-falling-flames",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Falling flames via pure WebGL",
+  "main": "index.js",
+  "author": "Anton Dubrouski <antondubrouski@gmail.com>",
+  "license": "MIT",
+  "repository": "https://github.com/adubrouski/webgl-falling-flames"
+}
