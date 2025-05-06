@@ -1,5 +1,5 @@
 class DprManager {
-  static #DPR = Math.min(window.devicePixelRatio, 2);
+  static #DPR = Math.min(window.devicePixelRatio, 1.5);
 
   /**
    * @param value {number}
