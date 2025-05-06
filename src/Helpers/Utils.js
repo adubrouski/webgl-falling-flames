@@ -13,7 +13,7 @@ class Utils {
    * @returns {number}
    */
   static msToSeconds(ms) {
-    return ms / 1_000;
+    return ms * 0.001;
   }
 }
 

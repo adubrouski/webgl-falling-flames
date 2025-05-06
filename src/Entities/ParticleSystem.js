@@ -1,4 +1,5 @@
 import { Flame } from "./Flame.js";
+import { Utils } from "../Helpers/Utils.js";
 
 class ParticleSystem {
   /**
@@ -46,12 +47,14 @@ class ParticleSystem {
    * @param sizeArray {Float32Array}
    */
   fillBuffers(positionArray, timeArray, sizeArray) {
+    const now = Utils.msToSeconds(performance.now());
+
     for (let i = 0; i < this.#flames.length; i++) {
       const cluster = this.#flames[i];
 
       const offset = i * cluster.particlesCount;
 
-      cluster.fillBuffers(positionArray, timeArray, offset);
+      cluster.fillBuffers(positionArray, timeArray, offset, now);
 
       sizeArray.set(cluster.sizes, offset)
     }

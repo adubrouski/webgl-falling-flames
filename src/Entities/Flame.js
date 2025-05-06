@@ -131,35 +131,44 @@ class Flame {
    * @param positionArray {Float32Array}
    * @param timeArray {Float32Array}
    * @param offset {number}
+   * @param now {number}
    */
-  fillBuffers(positionArray, timeArray, offset) {
-    const now = Utils.msToSeconds(performance.now());
+  fillBuffers(positionArray, timeArray, offset, now) {
     const invW = 1 / this.#canvas.width;
     const invH = 1 / this.#canvas.height;
+
+    const scaleW = 2 * invW;
 
     const sinNow = Math.sin(now);
     const cosNow = Math.cos(now);
 
-    for (let i = 0; i < this.particlesCount; i++) {
-      const t = Math.min(this.#ages[i] / this.#lives[i], 1);
-      const oneMinusT = 1 - t;
-      const doubleOffset = 2 * offset;
+    const baseY = this.#baseY;
+    const centerX = this.#centerX;
+    const height = this.#height;
+    const noiseAmp = this.#noiseAmp;
 
+    let doubleOffset = offset * 2;
+
+    for (let i = 0; i < this.particlesCount; i++, offset++, doubleOffset += 2) {
+      const age = this.#ages[i];
+      const life = this.#lives[i];
+      const t = age < life ? age / life : 1;
+      const oneMinusT = 1 - t;
+
+      const offsetX = this.#offsets[i];
       const sinSum = sinNow * this.#cosPhases[i] + cosNow * this.#sinPhases[i];
 
-      const x = this.#centerX +
-        (this.#offsets[i] * oneMinusT + sinSum * this.#noiseAmp * oneMinusT);
-      const y = this.#baseY - (t * this.#height);
+      const offsetXWithNoise = (offsetX + sinSum * noiseAmp) * oneMinusT;
 
-      positionArray[doubleOffset] = (x * invW) * 2 - 1;
+      const x = centerX + offsetXWithNoise;
+      const y = baseY - t * height;
+
+      positionArray[doubleOffset] = x * scaleW - 1;
       positionArray[doubleOffset + 1] = (1 - y * invH) * 2 - 1;
 
       timeArray[offset] = t;
-
-      offset++;
     }
   }
-
 
   #init() {
     this.#centerX = Math.random() * this.#canvas.width;
@@ -182,7 +191,6 @@ class Flame {
       this.sizes[i] = DprManager.toDpr(2 + Math.random() * 3);
     }
   }
-
 }
 
 export { Flame };
