@@ -57,12 +57,18 @@ const renderApp = (config) => {
 
   const positionArray = new Float32Array(MAX_PARTICLE_COUNT * 2);
   const positionBuffer = ctx.createBuffer();
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, positionArray.byteLength, ctx.DYNAMIC_DRAW);
 
   const timeArray = new Float32Array(MAX_PARTICLE_COUNT);
   const timeBuffer = ctx.createBuffer();
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, timeBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, timeArray.byteLength, ctx.DYNAMIC_DRAW);
 
   const sizeArray = new Float32Array(MAX_PARTICLE_COUNT);
   const sizeBuffer = ctx.createBuffer();
+  ctx.bindBuffer(ctx.ARRAY_BUFFER, sizeBuffer);
+  ctx.bufferData(ctx.ARRAY_BUFFER, sizeArray.byteLength, ctx.DYNAMIC_DRAW);
 
   const particleSystem = new ParticleSystem({
     canvas,
@@ -104,15 +110,15 @@ const renderApp = (config) => {
     particleSystem.fillBuffers(positionArray, timeArray, sizeArray);
 
     ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
-    ctx.bufferData(ctx.ARRAY_BUFFER, positionArray, ctx.DYNAMIC_DRAW);
+    ctx.bufferSubData(ctx.ARRAY_BUFFER, 0, positionArray);
     ctx.vertexAttribPointer(positionAttrLocation, 2, ctx.FLOAT, false, 0, 0);
 
     ctx.bindBuffer(ctx.ARRAY_BUFFER, sizeBuffer);
-    ctx.bufferData(ctx.ARRAY_BUFFER, sizeArray, ctx.DYNAMIC_DRAW);
+    ctx.bufferSubData(ctx.ARRAY_BUFFER, 0, sizeArray);
     ctx.vertexAttribPointer(sizeAttrLocation, 1, ctx.FLOAT, false, 0, 0);
 
     ctx.bindBuffer(ctx.ARRAY_BUFFER, timeBuffer);
-    ctx.bufferData(ctx.ARRAY_BUFFER, timeArray, ctx.DYNAMIC_DRAW);
+    ctx.bufferSubData(ctx.ARRAY_BUFFER, 0, timeArray);
     ctx.vertexAttribPointer(timeAttrLocation, 1, ctx.FLOAT, false, 0, 0);
 
     ctx.clearColor(0, 0, 0, 1);
