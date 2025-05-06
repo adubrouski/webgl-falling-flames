@@ -1,40 +1,47 @@
 class ShaderSource {
+  static POSITION_ATTRIBUTE = "a_pos";
+  static SIZE_ATTRIBUTE = "a_size";
+  static TIME_ATTRIBUTE = "a_t";
+
+  static TIME_VARYING = "v_t";
+
+  static TOP_COLOR_UNIFORM = "u_colorTop";
+  static BOTTOM_COLOR_UNIFORM = "u_colorBottom";
+
   static VERTEX_SHADER_SOURCE = `
-    attribute vec2 a_pos;
-    attribute float a_size;
-    attribute float a_t;
+    attribute vec2 ${this.POSITION_ATTRIBUTE};
+    attribute float ${this.SIZE_ATTRIBUTE};
+    attribute float ${this.TIME_ATTRIBUTE};
     
-    varying float v_t;
+    varying float ${this.TIME_VARYING};
     
     void main() {
-      float sz = a_size * (1.0 + 2.0 * (1.0 - abs(0.5 - a_t)));
+      gl_PointSize = ${this.SIZE_ATTRIBUTE} * (1.0 + 2.0 * (1.0 - abs(0.5 - ${this.TIME_ATTRIBUTE})));
+      gl_Position = vec4(${this.POSITION_ATTRIBUTE}, 0.0, 1.0);
       
-      gl_PointSize = sz;
-      gl_Position = vec4(a_pos, 0.0, 1.0);
-      
-      v_t = a_t;
+      ${this.TIME_VARYING} = ${this.TIME_ATTRIBUTE};
     }
-  `;
+  `.trim();
 
   static FRAGMENT_SHADER_SOURCE = `
     precision mediump float;
     
-    uniform vec3 u_colorBottom;
-    uniform vec3 u_colorTop;
+    uniform vec3 ${this.TOP_COLOR_UNIFORM};
+    uniform vec3 ${this.BOTTOM_COLOR_UNIFORM};
     
-    varying float v_t;
+    varying float ${this.TIME_VARYING};
     
-    void main() {
-      float d = distance(gl_PointCoord, vec2(0.5));
+    void main() {     
+      if (distance(gl_PointCoord, vec2(0.5)) > 0.5) {
+        discard;
+      };
       
-      if (d > 0.5) discard;
-      
-      vec3 col = mix(u_colorBottom, u_colorTop, v_t);
-      float alpha = smoothstep(0.0, 0.2, v_t) * (1.0 - smoothstep(0.6, 1.0, v_t));
-      
-      gl_FragColor = vec4(col, alpha);
+      gl_FragColor = vec4(
+        mix(${this.BOTTOM_COLOR_UNIFORM}, ${this.TOP_COLOR_UNIFORM}, ${this.TIME_VARYING}),
+        smoothstep(0.0, 0.2, ${this.TIME_VARYING}) * (1.0 - smoothstep(0.6, 1.0, ${this.TIME_VARYING}))
+      );
     }
-  `;
+  `.trim();
 }
 
 export { ShaderSource };

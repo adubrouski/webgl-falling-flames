@@ -1,6 +1,7 @@
 class GlManager {
   /**
-   * @param selector {string}
+   * @param selector
+   * @returns {{canvas: HTMLCanvasElement, ctx: WebGLRenderingContext}}
    */
   static getRenderer(selector) {
     const canvas = document.querySelector(selector);

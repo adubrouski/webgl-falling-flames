@@ -1,13 +1,15 @@
+import { DprManager } from "./DprManager.js";
+
 class ResizeHandler {
   /**
    * @param canvas {HTMLCanvasElement}
    * @param ctx {WebGLRenderingContext}
    */
   static #doHandle(canvas, ctx) {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    ctx.canvas.width = DprManager.toDpr(ctx.canvas.clientWidth);
+    ctx.canvas.height = DprManager.toDpr(ctx.canvas.clientHeight);
 
-    ctx.viewport(0, 0, canvas.width, canvas.height);
+    ctx.viewport(0, 0, ctx.canvas.width, ctx.canvas.height);
   }
 
   /**

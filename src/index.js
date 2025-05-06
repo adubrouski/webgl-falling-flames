@@ -1,94 +1,161 @@
 import { ResizeHandler } from "./Helpers/ResizeHandler.js";
 import { GlManager } from "./Helpers/GlManager.js";
-import { ShaderProgram } from "./Entities/ShaderProgram.js";
+import { Program } from "./Entities/Program.js";
 import { ParticleSystem } from "./Entities/ParticleSystem.js";
 import { ShaderSource } from "./ShaderSource/ShaderSource.js";
+import { ShaderManager } from "./Helpers/ShaderManager.js";
+import { ErrorHandler } from "./Helpers/ErrorHandler.js";
+import { Utils } from "./Helpers/Utils.js";
 
-const FLAME_COUNT = 30;
-const FLAME_PARTICLES_COUNT = 100;
-const WIDTH_RANGE = [10, 20];
-const HEIGHT_RANGE = [40, 80];
-const NOISE_RANGE = [10, 15];
-const SPEED_RANGE = [30, 100];
-const COLOR_BOTTOM = [1, 0, 0];
-const COLOR_TOP = [1, 0.5, 0];
+const settings = {
+  flameCount: 1500,
+  flameParticleCount: 70,
+  widthRange: [20, 35],
+  heightRange: [40, 70],
+  noiseRange: [10, 15],
+  speedRange: [20, 80],
+  particleTopColor: [1, 0.5, 0],
+  particleBottomColor: [1, 0, 0],
+}
 
-try {
+ErrorHandler.handle();
+
+/**
+ * @type {null|{destroy:Function}}
+ */
+let currentApp = null;
+/**
+ * @type {null|number}
+ */
+let renderTimerId = null;
+
+const flamesCountViewElement = document.querySelector("#flames-count-view");
+const flamesCountInputElement = document.querySelector("#flames-count-input");
+
+flamesCountViewElement.innerText = settings.flameCount;
+flamesCountInputElement.value = settings.flameCount;
+
+flamesCountInputElement.addEventListener("input", (e) => {
+  const flameCount = Number(e.target.value);
+
+  flamesCountViewElement.innerText = flameCount;
+
+  if (renderTimerId !== null) {
+    clearTimeout(renderTimerId);
+  }
+
+  renderTimerId = setTimeout(
+    () => {
+      settings.flameCount = flameCount;
+
+      if (currentApp !== null) {
+        currentApp.destroy();
+      }
+
+      currentApp = renderApp(settings);
+    },
+    0,
+  )
+});
+
+const renderApp = (settings) => {
+  /**
+   * @type {number|null}
+   */
+  let frameId = null;
+
+  const MAX_PARTICLE_COUNT = settings.flameCount * settings.flameParticleCount;
+
   const { canvas, ctx } = GlManager.getRenderer("canvas");
 
   ResizeHandler.handle(canvas, ctx);
 
-  const shader = new ShaderProgram(ctx, ShaderSource.VERTEX_SHADER_SOURCE, ShaderSource.FRAGMENT_SHADER_SOURCE);
-
-  shader.use();
-  shader.setUniform3fv("u_colorBottom", COLOR_BOTTOM);
-  shader.setUniform3fv("u_colorTop", COLOR_TOP);
-
-  const aPosLoc = shader.getAttribLocation("a_pos");
-  const aSizeLoc = shader.getAttribLocation("a_size");
-  const aTLoc = shader.getAttribLocation("a_t");
-
   ctx.enable(ctx.BLEND);
   ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE);
 
-  const system = new ParticleSystem(
+  const vertexShader = ShaderManager.compileVertex(ctx, ShaderSource.VERTEX_SHADER_SOURCE);
+  const fragmentShader = ShaderManager.compileFragment(ctx, ShaderSource.FRAGMENT_SHADER_SOURCE);
+
+  const program = new Program(ctx, vertexShader, fragmentShader);
+
+  program.use();
+
+  program.setUniform3fv(ShaderSource.TOP_COLOR_UNIFORM, settings.particleTopColor);
+  program.setUniform3fv(ShaderSource.BOTTOM_COLOR_UNIFORM, settings.particleBottomColor);
+
+  const positionAttrLocation = program.getAttribLocation(ShaderSource.POSITION_ATTRIBUTE);
+  const sizeAttrLocation = program.getAttribLocation(ShaderSource.SIZE_ATTRIBUTE);
+  const timeAttrLocation = program.getAttribLocation(ShaderSource.TIME_ATTRIBUTE);
+
+  ctx.enableVertexAttribArray(positionAttrLocation);
+  ctx.enableVertexAttribArray(sizeAttrLocation);
+  ctx.enableVertexAttribArray(timeAttrLocation);
+
+  const positionArray = new Float32Array(MAX_PARTICLE_COUNT * 2);
+  const positionBuffer = ctx.createBuffer();
+
+  const timeArray = new Float32Array(MAX_PARTICLE_COUNT);
+  const timeBuffer = ctx.createBuffer();
+
+  const sizeArray = new Float32Array(MAX_PARTICLE_COUNT);
+  const sizeBuffer = ctx.createBuffer();
+
+  const particleSystem = new ParticleSystem({
     canvas,
-    {
-      flameCount: FLAME_COUNT,
-      particlesCount: FLAME_PARTICLES_COUNT,
-      widthRange: WIDTH_RANGE,
-      heightRange: HEIGHT_RANGE,
-      noiseRange: NOISE_RANGE,
-      speedRange: SPEED_RANGE
-    },
-  );
+    flameCount: settings.flameCount,
+    flameParticlesCount: settings.flameParticleCount,
+    widthRange: settings.widthRange,
+    heightRange: settings.heightRange,
+    noiseRange: settings.noiseRange,
+    speedRange: settings.speedRange
+  });
 
-  const maxTotal = FLAME_COUNT * FLAME_PARTICLES_COUNT;
-  const positions = new Float32Array(maxTotal * 2);
-  const tArray = new Float32Array(maxTotal);
-  const sizesArr = new Float32Array(maxTotal);
-
-  const bufPos = ctx.createBuffer();
-  const bufSize = ctx.createBuffer();
-  const bufT = ctx.createBuffer();
-
-  let lastTime = performance.now();
-
-  const animate = () => {
+  const runRenderLoop = (timestamp) => {
     const now = performance.now();
-    const dt = (now - lastTime) * 0.001;
+    const deltaTime = Utils.msToSeconds(now - timestamp);
 
-    lastTime  = now;
+    particleSystem.update(deltaTime);
+    particleSystem.fillBuffers(positionArray, timeArray, sizeArray);
 
-    system.update(dt);
-    const totalCount = system.fillBuffers(positions, tArray, sizesArr);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
+    ctx.bufferData(ctx.ARRAY_BUFFER, positionArray, ctx.DYNAMIC_DRAW);
+    ctx.vertexAttribPointer(positionAttrLocation, 2, ctx.FLOAT, false, 0, 0);
 
-    shader.use();
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, sizeBuffer);
+    ctx.bufferData(ctx.ARRAY_BUFFER, sizeArray, ctx.DYNAMIC_DRAW);
+    ctx.vertexAttribPointer(sizeAttrLocation, 1, ctx.FLOAT, false, 0, 0);
 
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, bufPos);
-    ctx.bufferData(ctx.ARRAY_BUFFER, positions, ctx.DYNAMIC_DRAW);
-    ctx.enableVertexAttribArray(aPosLoc);
-    ctx.vertexAttribPointer(aPosLoc, 2, ctx.FLOAT, false, 0, 0);
-
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, bufSize);
-    ctx.bufferData(ctx.ARRAY_BUFFER, sizesArr, ctx.DYNAMIC_DRAW);
-    ctx.enableVertexAttribArray(aSizeLoc);
-    ctx.vertexAttribPointer(aSizeLoc, 1, ctx.FLOAT, false, 0, 0);
-
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, bufT);
-    ctx.bufferData(ctx.ARRAY_BUFFER, tArray, ctx.DYNAMIC_DRAW);
-    ctx.enableVertexAttribArray(aTLoc);
-    ctx.vertexAttribPointer(aTLoc, 1, ctx.FLOAT, false, 0, 0);
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, timeBuffer);
+    ctx.bufferData(ctx.ARRAY_BUFFER, timeArray, ctx.DYNAMIC_DRAW);
+    ctx.vertexAttribPointer(timeAttrLocation, 1, ctx.FLOAT, false, 0, 0);
 
     ctx.clearColor(0, 0, 0, 1);
     ctx.clear(ctx.COLOR_BUFFER_BIT);
-    ctx.drawArrays(ctx.POINTS, 0, totalCount);
+    ctx.drawArrays(ctx.POINTS, 0, MAX_PARTICLE_COUNT);
 
-    requestAnimationFrame(animate);
+    frameId = requestAnimationFrame(runRenderLoop.bind(null, now));
   }
 
-  animate();
-} catch (error) {
-  document.body.innerText = error.message;
-  throw error;
+  runRenderLoop(performance.now());
+
+  return {
+    destroy: () => {
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+
+      ctx.deleteBuffer(positionBuffer);
+      ctx.deleteBuffer(sizeBuffer);
+      ctx.deleteBuffer(timeBuffer);
+
+      ctx.deleteProgram(program.program);
+      ctx.deleteShader(vertexShader);
+      ctx.deleteShader(fragmentShader);
+
+      ctx.bindBuffer(ctx.ARRAY_BUFFER, null);
+      ctx.useProgram(null);
+    },
+  };
 }
+
+currentApp = renderApp(settings);
