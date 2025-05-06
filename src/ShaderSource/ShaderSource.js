@@ -32,13 +32,9 @@ class ShaderSource {
     varying float ${this.TIME_VARYING};
     
     void main() {     
-      float d = distance(gl_PointCoord, vec2(0.5));
-      float alpha = step(d, 0.5);
-      
-      gl_FragColor = vec4(
-      mix(${this.BOTTOM_COLOR_UNIFORM}, ${this.TOP_COLOR_UNIFORM}, ${this.TIME_VARYING}),
-       smoothstep(0.0, 0.2, ${this.TIME_VARYING}) * (1.0 - smoothstep(0.6, 1.0, ${this.TIME_VARYING}))
-       );
+      if (distance(gl_PointCoord, vec2(0.5)) > 0.5) {
+        discard;
+      };
       
       gl_FragColor = vec4(
         mix(${this.BOTTOM_COLOR_UNIFORM}, ${this.TOP_COLOR_UNIFORM}, ${this.TIME_VARYING}),
