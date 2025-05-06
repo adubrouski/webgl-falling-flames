@@ -175,6 +175,7 @@ class Flame {
       this.#ages[i] = Math.random() * this.#lives[i];
 
       const phase = Math.random() * Math.PI * 2;
+
       this.#sinPhases[i] = Math.sin(phase);
       this.#cosPhases[i] = Math.cos(phase);
 
