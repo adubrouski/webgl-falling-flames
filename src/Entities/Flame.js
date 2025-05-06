@@ -46,7 +46,11 @@ class Flame {
   /**
    * @type {Float32Array}
    */
-  #phases;
+  #sinPhases;
+  /**
+   * @type {Float32Array}
+   */
+  #cosPhases;
   /**
    * @type {number}
    */
@@ -93,7 +97,8 @@ class Flame {
     this.#offsets = new Float32Array(this.particlesCount);
     this.#ages = new Float32Array(this.particlesCount);
     this.#lives = new Float32Array(this.particlesCount);
-    this.#phases = new Float32Array(this.particlesCount);
+    this.#sinPhases = new Float32Array(this.particlesCount);
+    this.#cosPhases = new Float32Array(this.particlesCount);
 
     this.#init();
   }
@@ -117,7 +122,6 @@ class Flame {
         this.#offsets[i] = (Math.random() * this.#width) - (this.#width * 0.5);
         this.#lives[i] = 0.8 + (Math.random() * 1.2);
         this.#ages[i] = 0;
-        this.#phases[i] = Math.random() * Math.PI * 2;
         this.sizes[i] = DprManager.toDpr(2 + (Math.random() * 3));
       }
     }
@@ -129,20 +133,33 @@ class Flame {
    * @param offset {number}
    */
   fillBuffers(positionArray, timeArray, offset) {
+    const now = Utils.msToSeconds(performance.now());
+    const invW = 1 / this.#canvas.width;
+    const invH = 1 / this.#canvas.height;
+
+    const sinNow = Math.sin(now);
+    const cosNow = Math.cos(now);
+
     for (let i = 0; i < this.particlesCount; i++) {
       const t = Math.min(this.#ages[i] / this.#lives[i], 1);
+      const oneMinusT = 1 - t;
+      const doubleOffset = 2 * offset;
+
+      const sinSum = sinNow * this.#cosPhases[i] + cosNow * this.#sinPhases[i];
 
       const x = this.#centerX +
-        ((this.#offsets[i] * (1 - t)) + Math.sin(Utils.msToSeconds(performance.now()) + this.#phases[i]) * this.#noiseAmp * (1 - t));
-      const y = this.#baseY - t * this.#height;
+        (this.#offsets[i] * oneMinusT + sinSum * this.#noiseAmp * oneMinusT);
+      const y = this.#baseY - (t * this.#height);
 
-      positionArray[2 * offset] = (x / this.#canvas.width) * 2 - 1;
-      positionArray[2 * offset + 1] = (1 - y / this.#canvas.height) * 2 - 1;
+      positionArray[doubleOffset] = (x * invW) * 2 - 1;
+      positionArray[doubleOffset + 1] = (1 - y * invH) * 2 - 1;
+
       timeArray[offset] = t;
 
       offset++;
     }
   }
+
 
   #init() {
     this.#centerX = Math.random() * this.#canvas.width;
@@ -156,10 +173,15 @@ class Flame {
       this.#offsets[i] = Math.random() * this.#width - this.#width * 0.5;
       this.#lives[i] = 0.8 + Math.random() * 1.2;
       this.#ages[i] = Math.random() * this.#lives[i];
-      this.#phases[i] = Math.random() * Math.PI * 2;
+
+      const phase = Math.random() * Math.PI * 2;
+      this.#sinPhases[i] = Math.sin(phase);
+      this.#cosPhases[i] = Math.cos(phase);
+
       this.sizes[i] = DprManager.toDpr(2 + Math.random() * 3);
     }
   }
+
 }
 
 export { Flame };
