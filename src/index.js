@@ -8,7 +8,7 @@ import { ErrorHandler } from "./Helpers/ErrorHandler.js";
 import { Utils } from "./Helpers/Utils.js";
 
 const settings = {
-  flameCount: 1500,
+  flameCount: 100,
   flameParticleCount: 70,
   widthRange: [20, 35],
   heightRange: [40, 70],
@@ -31,14 +31,15 @@ let renderTimerId = null;
 
 const flamesCountViewElement = document.querySelector("#flames-count-view");
 const flamesCountInputElement = document.querySelector("#flames-count-input");
+const fpsCountViewElement = document.querySelector("#fps-count-view");
 
-flamesCountViewElement.innerText = settings.flameCount;
+flamesCountViewElement.innerText = `${settings.flameCount} flames`;
 flamesCountInputElement.value = settings.flameCount;
 
 flamesCountInputElement.addEventListener("input", (e) => {
   const flameCount = Number(e.target.value);
 
-  flamesCountViewElement.innerText = flameCount;
+  flamesCountViewElement.innerText = `${flameCount} flames`;
 
   if (renderTimerId !== null) {
     clearTimeout(renderTimerId);
@@ -110,9 +111,22 @@ const renderApp = (settings) => {
     speedRange: settings.speedRange
   });
 
+  let frames = 0;
+  let fps = 0;
+  let lastFpsUpdate = 0;
+
   const runRenderLoop = (timestamp) => {
     const now = performance.now();
     const deltaTime = Utils.msToSeconds(now - timestamp);
+
+    frames++;
+    if (now - lastFpsUpdate >= 1000) {
+      fps = frames;
+      frames = 0;
+      lastFpsUpdate = now;
+
+      fpsCountViewElement.innerText = `${fps} FPS`;
+    }
 
     particleSystem.update(deltaTime);
     particleSystem.fillBuffers(positionArray, timeArray, sizeArray);
