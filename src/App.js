@@ -35,7 +35,7 @@ const renderApp = (config) => {
   ResizeHandler.handle(canvas, ctx);
 
   ctx.enable(ctx.BLEND);
-  ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE);
+  ctx.blendFunc(ctx.SRC_ALPHA, ctx.ONE_MINUS_SRC_ALPHA);
 
   const vertexShader = ShaderManager.compileVertex(ctx, ShaderSource.VERTEX_SHADER_SOURCE);
   const fragmentShader = ShaderManager.compileFragment(ctx, ShaderSource.FRAGMENT_SHADER_SOURCE);
@@ -91,7 +91,6 @@ const renderApp = (config) => {
     previousFrameTimestamp = now;
 
     frames++;
-
     if (now - lastFpsUpdate >= 1000) {
       fps = frames;
       frames = 0;
