@@ -1,12 +1,36 @@
+html {
+  height: 100%;
+}
+
 body {
+  height: 100%;
   margin: 0;
   overflow: hidden;
 }
 
 canvas {
-  width: 100dvw;
-  height: 100dvh;
+  width: 100%;
+  height: 100%;
   display: block;
+}
+
+#info-block {
+  width: 70px;
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 8px;
+  line-height: 8px;
+  text-align: right;
+  background: black;
+  opacity: 0.8;
+  color: #00ff0b;
 }
 
 #flames-count-input-wrapper {
@@ -24,36 +48,4 @@ canvas {
   width: 100%;
   margin: 0;
   cursor: pointer;
-}
-
-#flames-count-view {
-  width: 70px;
-  position: absolute;
-  right: 0;
-  top: 20px;
-  padding: 4px;
-  font-family: sans-serif;
-  font-weight: bold;
-  font-size: 10px;
-  line-height: 12px;
-  text-align: center;
-  color: #00ff0b;
-  background: black;
-  opacity: 0.8;
-}
-
-#fps-count-view {
-  width: 50px;
-  position: absolute;
-  right: 0;
-  top: 0;
-  padding: 4px;
-  font-family: sans-serif;
-  font-weight: bold;
-  font-size: 10px;
-  line-height: 12px;
-  text-align: center;
-  color: #00ff0b;
-  background: black;
-  opacity: 0.8;
 }
